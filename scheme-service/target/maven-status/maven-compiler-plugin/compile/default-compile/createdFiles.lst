@@ -1,0 +1,11 @@
+com\fundwise\scheme\entity\Scheme.class
+com\fundwise\scheme\dto\SchemeRequests.class
+com\fundwise\scheme\repository\NavHistoryRepository.class
+com\fundwise\scheme\entity\NavHistory.class
+com\fundwise\scheme\controller\SchemeController.class
+com\fundwise\scheme\dto\SchemeRequests$SchemeRequest.class
+com\fundwise\scheme\repository\SchemeRepository.class
+com\fundwise\scheme\dto\SchemeRequests$NavHistoryRequest.class
+com\fundwise\scheme\service\SchemeService.class
+com\fundwise\scheme\SchemeServiceApplication.class
+com\fundwise\scheme\exception\NotFoundException.class
