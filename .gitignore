@@ -1,0 +1,8 @@
+**/target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+case-study-render/
+logs/
