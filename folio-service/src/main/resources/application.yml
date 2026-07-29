@@ -1,0 +1,17 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: folio-service
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/fundwise_folio?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
