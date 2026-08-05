@@ -1,7 +1,11 @@
+C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\config\DemoDataInitializer.java
+C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\config\OpenApiConfig.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\controller\SchemeController.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\dto\SchemeRequests.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\entity\NavHistory.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\entity\Scheme.java
+C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\exception\ApiExceptionHandler.java
+C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\exception\DuplicateResourceException.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\exception\NotFoundException.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\repository\NavHistoryRepository.java
 C:\Users\Gauresh\Documents\Microservice_FundWise\scheme-service\src\main\java\com\fundwise\scheme\repository\SchemeRepository.java

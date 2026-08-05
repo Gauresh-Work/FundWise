@@ -5,26 +5,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public final class SchemeRequests {
-
-    private SchemeRequests() {
-    }
-
-    public record SchemeRequest(
-            @NotBlank @Size(max = 30) String schemeCode,
-            @NotBlank @Size(max = 150) String schemeName,
-            @NotBlank String schemeType,
-            @NotBlank String riskLevel,
-            @NotNull @PastOrPresent LocalDate launchDate,
-            @NotNull @DecimalMin(value = "0.01") BigDecimal minInvestment,
-            @NotNull @DecimalMin(value = "0.00") @DecimalMax(value = "100.00")
-            BigDecimal expenseRatio,
-            @NotBlank String status
-    ) {
-    }
-
-    public record NavHistoryRequest(
-            @NotNull @PastOrPresent LocalDate navDate,
-            @NotNull @DecimalMin(value = "0.0001") BigDecimal navValue
-    ) {
-    }
+    private SchemeRequests() { }
+    public record SchemeRequest(@NotBlank String schemeCode, @NotBlank String name, @NotBlank String schemeType,
+                                @DecimalMin("0.0") BigDecimal expenseRatio, @DecimalMin("0.0") BigDecimal currentNav,
+                                @NotBlank String status) { }
+    public record NavHistoryRequest(@NotNull LocalDate navDate, @NotNull @DecimalMin("0.0") BigDecimal nav) { }
 }

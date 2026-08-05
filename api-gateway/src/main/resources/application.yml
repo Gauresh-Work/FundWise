@@ -4,10 +4,87 @@ spring:
   cloud:
     gateway:
       discovery: { locator: { enabled: true, lower-case-service-id: true } }
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - http://localhost:8000
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
       routes:
-        - { id: investor, uri: lb://investor-service, predicates: [ Path=/investors/**,Path=/bank-mandates/**,Path=/nominees/**,Path=/kyc-documents/** ] }
-        - { id: scheme, uri: lb://scheme-service, predicates: [ Path=/schemes/** ] }
-        - { id: folio, uri: lb://folio-service, predicates: [ Path=/folios/** ] }
-        - { id: transaction, uri: lb://transaction-service, predicates: [ Path=/transactions/** ] }
-        - { id: statement, uri: lb://statement-service, predicates: [ Path=/statements/** ] }
+        - id: investor
+          uri: lb://investor-service
+          predicates:
+            - "Path=/investors/**,/bank-mandates/**,/nominees/**,/kyc-documents/**"
+        - id: scheme
+          uri: lb://scheme-service
+          predicates:
+            - "Path=/schemes/**"
+        - id: folio
+          uri: lb://folio-service
+          predicates:
+            - "Path=/folios/**"
+        - id: transaction
+          uri: lb://transaction-service
+          predicates:
+            - "Path=/transactions/**"
+        - id: statement
+          uri: lb://statement-service
+          predicates:
+            - "Path=/statements/**"
+        - id: investor-openapi
+          uri: lb://investor-service
+          predicates:
+            - "Path=/openapi/investor"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: scheme-openapi
+          uri: lb://scheme-service
+          predicates:
+            - "Path=/openapi/scheme"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: folio-openapi
+          uri: lb://folio-service
+          predicates:
+            - "Path=/openapi/folio"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: transaction-openapi
+          uri: lb://transaction-service
+          predicates:
+            - "Path=/openapi/transaction"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: statement-openapi
+          uri: lb://statement-service
+          predicates:
+            - "Path=/openapi/statement"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: discovery-openapi
+          uri: http://localhost:8761
+          predicates:
+            - "Path=/openapi/discovery"
+          filters:
+            - "SetPath=/v3/api-docs"
 eureka: { client: { service-url: { defaultZone: http://localhost:8761/eureka/ } } }
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls:
+      - { name: API Gateway, url: /v3/api-docs }
+      - { name: Discovery Server, url: /openapi/discovery }
+      - { name: Investor Service, url: /openapi/investor }
+      - { name: Scheme Service, url: /openapi/scheme }
+      - { name: Folio Service, url: /openapi/folio }
+      - { name: Transaction Service, url: /openapi/transaction }
+      - { name: Statement Service, url: /openapi/statement }
