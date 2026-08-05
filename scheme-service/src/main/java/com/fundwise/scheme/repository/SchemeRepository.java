@@ -14,4 +14,9 @@ public interface SchemeRepository extends JpaRepository<Scheme, Long> {
     List<Scheme> findByStatusIgnoreCase(String status);
 
     List<Scheme> findBySchemeTypeIgnoreCase(String schemeType);
+
+    List<Scheme> findByStatusIgnoreCaseAndSchemeTypeIgnoreCase(
+            String status,
+            String schemeType
+    );
 }

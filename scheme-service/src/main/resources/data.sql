@@ -1,6 +1,15 @@
-INSERT IGNORE INTO schemes (scheme_code, name, scheme_type, expense_ratio, current_nav, status) VALUES
-    ('HDFC-MID-001', 'HDFC Mid-Cap Opportunities Fund', 'Equity - Mid Cap', 1.45, 182.73, 'ACTIVE'),
-    ('SBI-BLUE-001', 'SBI Bluechip Fund', 'Equity - Large Cap', 0.92, 87.64, 'ACTIVE'),
-    ('ICICI-LIQ-001', 'ICICI Prudential Liquid Fund', 'Debt - Liquid', 0.32, 356.18, 'ACTIVE'),
-    ('PARAG-FLEX-001', 'Parag Parikh Flexi Cap Fund', 'Equity - Flexi Cap', 0.63, 91.27, 'ACTIVE'),
-    ('KOTAK-HYB-001', 'Kotak Equity Hybrid Fund', 'Hybrid - Aggressive', 1.18, 74.53, 'ACTIVE');
+INSERT IGNORE INTO schemes
+(scheme_code, scheme_name, scheme_type, risk_level, launch_date,
+ min_investment, expense_ratio, status, created_at)
+VALUES
+('HDFC-MID-001', 'HDFC Mid-Cap Opportunities Fund', 'EQUITY', 'VERY_HIGH',
+ '2014-01-01', 500.00, 1.45, 'ACTIVE', NOW()),
+
+('SBI-BLUE-001', 'SBI Bluechip Fund', 'EQUITY', 'HIGH',
+ '2006-02-14', 500.00, 0.92, 'ACTIVE', NOW()),
+
+('ICICI-LIQ-001', 'ICICI Prudential Liquid Fund', 'DEBT', 'LOW',
+ '2005-10-11', 500.00, 0.32, 'ACTIVE', NOW()),
+
+('KOTAK-HYB-001', 'Kotak Equity Hybrid Fund', 'HYBRID', 'HIGH',
+ '2013-07-25', 500.00, 1.18, 'ACTIVE', NOW());

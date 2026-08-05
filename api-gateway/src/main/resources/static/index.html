@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FundWise mutual fund operations dashboard" />
+    <title>FundWise — Wealth operations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260805-3" />
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="#/dashboard" aria-label="FundWise home">
+            <span class="brand-mark">F</span>
+            <span><strong>FundWise</strong><small>Wealth operations</small></span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+            <a href="#/dashboard" data-route="dashboard"><span class="nav-icon">⌂</span> Overview</a>
+            <span class="nav-label">Client management</span>
+            <a href="#/investors" data-route="investors"><span class="nav-icon">◎</span> Investors</a>
+            <a href="#/compliance" data-route="compliance"><span class="nav-icon">✓</span> KYC & banking</a>
+            <span class="nav-label">Fund operations</span>
+            <a href="#/schemes" data-route="schemes"><span class="nav-icon">◇</span> Schemes</a>
+            <a href="#/folios" data-route="folios"><span class="nav-icon">▤</span> Folios</a>
+            <a href="#/transactions" data-route="transactions"><span class="nav-icon">⇄</span> Transactions</a>
+            <a href="#/statements" data-route="statements"><span class="nav-icon">≡</span> Statements</a>
+        </nav>
+        <div class="sidebar-card">
+            <span class="status-dot"></span>
+            <div><strong>API Gateway</strong><small id="gatewayStatus">Checking connection…</small></div>
+        </div>
+        <div class="sidebar-footer"><div class="avatar">VK</div><div><strong>Fund administrator</strong><small>Operations workspace</small></div></div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <button class="icon-button menu-button" id="menuButton" aria-label="Open navigation">☰</button>
+            <div class="search-wrap">
+                <span>⌕</span>
+                <input id="globalSearch" type="search" placeholder="Search this page…" aria-label="Search current page" />
+                <kbd>⌘ K</kbd>
+            </div>
+            <div class="top-actions">
+                <button class="icon-button" id="refreshButton" aria-label="Refresh page" title="Refresh">↻</button>
+                <button class="icon-button notification" aria-label="Notifications">○<i></i></button>
+                <div class="top-profile"><span class="avatar small">VK</span><span><strong>Administrator</strong><small>FundWise Ops</small></span></div>
+            </div>
+        </header>
+        <div id="connectionBanner" class="connection-banner hidden"></div>
+        <section id="app" class="content" aria-live="polite"></section>
+    </main>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot" class="toast-root" aria-live="assertive"></div>
+<script src="./app.js?v=20260805-3" defer></script>
+</body>
+</html>

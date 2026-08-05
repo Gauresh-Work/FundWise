@@ -4,9 +4,10 @@ spring:
   application:
     name: statement-service
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/fundwise_statement?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: jdbc:mysql://localhost:3306/mydb
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: Songs@2004
   jpa:
     hibernate:
       ddl-auto: update

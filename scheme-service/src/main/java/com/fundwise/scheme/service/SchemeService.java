@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -37,6 +36,12 @@ public class SchemeService {
 
     @Transactional(readOnly = true)
     public List<Scheme> getAll(String status, String type) {
+        if (status != null && !status.isBlank()
+                && type != null && !type.isBlank()) {
+            return schemeRepository
+                    .findByStatusIgnoreCaseAndSchemeTypeIgnoreCase(status, type);
+        }
+
         if (status != null && !status.isBlank()) {
             return schemeRepository.findByStatusIgnoreCase(status);
         }
