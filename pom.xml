@@ -37,6 +37,7 @@
     <modules>
         <module>discovery-server</module>
         <module>api-gateway</module>
+        <module>auth-service</module>
         <module>investor-service</module>
         <module>scheme-service</module>
         <module>folio-service</module>

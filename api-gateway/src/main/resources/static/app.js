@@ -1,12 +1,12 @@
 const app = document.querySelector('#app');
 const modalRoot = document.querySelector('#modalRoot');
 const toastRoot = document.querySelector('#toastRoot');
-const state = { cache: {}, search: '', complianceTab: 'kyc-documents', currentResource: null };
+const state = { cache: {}, search: '', schemeStatus: 'ALL', complianceTab: 'kyc-documents', currentResource: null };
 const demoMode = location.protocol === 'file:';
 const demoSeed = {
   investors: [{ id:1, fullName:'Aarav Mehta', email:'aarav@example.com', phone:'9876543210', panNumber:'ABCDE1234F', status:'ACTIVE' }],
   'kyc-documents': [{ id:1, investorId:1, documentType:'PAN', documentNumber:'ABCDE1234F', documentUrl:'', status:'VERIFIED' }],
-  'bank-mandates': [{ id:1, investorId:1, bankName:'HDFC Bank', accountNumber:'501234567890', ifscCode:'HDFC0001234', accountType:'SAVINGS' }],
+  'bank-mandates': [{ id:1, investorId:1, bankName:'HDFC Bank', accountNumber:'501234567890', ifscCode:'HDFC0001234', accountType:'SAVINGS', status:'VERIFIED' }],
   nominees: [{ id:1, investorId:1, fullName:'Anaya Mehta', relationship:'SPOUSE', allocationPercentage:100 }],
   schemes: [{ id:1, schemeCode:'FW-EQ-01', name:'FundWise Equity Growth', schemeType:'EQUITY', expenseRatio:0.72, currentNav:148.35, status:'ACTIVE' }],
   folios: [{ id:1, investorId:1, schemeId:1, folioNumber:'FW100001', status:'ACTIVE', currentUnits:674.08, averageNav:140.25, currentValue:100000 }],
@@ -22,7 +22,7 @@ const resources = {
     fields: [
       field('fullName', 'Full name', 'text', true), field('email', 'Email address', 'email', true),
       field('phone', 'Phone number', 'tel', false, { pattern:'[0-9]{10}', maxlength:10, title:'Enter exactly 10 digits' }), field('panNumber', 'PAN number', 'text', true, { pattern:'[A-Za-z]{5}[0-9]{4}[A-Za-z]', maxlength:10, title:'PAN must be 5 letters, 4 digits and 1 letter' }),
-      select('status', 'Status', ['ACTIVE', 'PENDING', 'INACTIVE'], true)
+      select('status', 'Status', ['ACTIVE', 'PENDING', 'KYC_VERIFIED', 'READY_FOR_APPROVAL', 'INACTIVE'], true)
     ],
     columns: [nameColumn('fullName', 'email'), col('panNumber', 'PAN'), col('phone', 'Phone'), statusColumn()]
   },
@@ -33,8 +33,8 @@ const resources = {
   },
   'bank-mandates': {
     singular: 'Bank mandate', icon: '▣', description: 'Registered payout and debit bank accounts',
-    fields: [ref('investorId', 'Investor', 'investors', 'fullName'), field('bankName', 'Bank name', 'text', true), field('accountNumber', 'Account number', 'text', true, { pattern:'[0-9]{9,18}', maxlength:18, title:'Account number must contain 9 to 18 digits' }), field('ifscCode', 'IFSC code', 'text', true, { pattern:'[A-Za-z]{4}0[A-Za-z0-9]{6}', maxlength:11, title:'Enter a valid 11-character IFSC code' }), select('accountType', 'Account type', ['SAVINGS', 'CURRENT', 'NRE', 'NRO'])],
-    columns: [refColumn('investorId', 'Investor', 'investors', 'fullName'), col('bankName', 'Bank'), maskedColumn('accountNumber', 'Account'), col('ifscCode', 'IFSC'), col('accountType', 'Type')]
+    fields: [ref('investorId', 'Investor', 'investors', 'fullName'), field('bankName', 'Bank name', 'text', true), field('accountNumber', 'Account number', 'text', true, { pattern:'[0-9]{9,18}', maxlength:18, title:'Account number must contain 9 to 18 digits' }), field('ifscCode', 'IFSC code', 'text', true, { pattern:'[A-Za-z]{4}0[A-Za-z0-9]{6}', maxlength:11, title:'Enter a valid 11-character IFSC code' }), select('accountType', 'Account type', ['SAVINGS', 'CURRENT', 'NRE', 'NRO']), select('status', 'Verification status', ['PENDING', 'VERIFIED', 'REJECTED'], true)],
+    columns: [refColumn('investorId', 'Investor', 'investors', 'fullName'), col('bankName', 'Bank'), maskedColumn('accountNumber', 'Account'), col('ifscCode', 'IFSC'), col('accountType', 'Type'), statusColumn()]
   },
   nominees: {
     singular: 'Nominee', icon: '♙', description: 'Investor nominees and allocation percentages',
@@ -82,6 +82,7 @@ function money(value) { return value == null || value === '' ? '—' : new Intl.
 function dateTime(value) { return value ? new Intl.DateTimeFormat('en-IN', { dateStyle:'medium', timeStyle:'short' }).format(new Date(value)) : '—'; }
 function badge(status = '') { const s = String(status); const cls = /pending|frozen/i.test(s) ? 'warn' : /inactive|failed|rejected|closed|cancel/i.test(s) ? 'bad' : !s ? 'neutral' : ''; return `<span class="badge ${cls}">${escapeHtml(s || 'Unknown')}</span>`; }
 function lookup(resource, id, display) { const item = (state.cache[resource] || []).find(x => String(x.id) === String(id)); return item ? item[display] : (id == null ? '—' : `#${id}`); }
+function canWrite(resource) { return window.FundWiseAuth?.canWrite(resource) ?? true; }
 
 async function api(path, options = {}) {
   if (demoMode) return demoApi(path, options);
@@ -144,10 +145,14 @@ async function router(force = false) {
   document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
   document.querySelector('#sidebar').classList.remove('open');
   state.search = '';
+  if (route !== 'schemes') state.schemeStatus = 'ALL';
   document.querySelector('#globalSearch').value = '';
   app.innerHTML = loadingCard();
   try {
     if (route === 'dashboard') await renderDashboard(force);
+    else if (route === 'profile') await window.FundWiseAuth.renderProfile();
+    else if (route === 'users') await window.FundWiseAuth.renderUsers();
+    else if (route === 'access-denied') await window.FundWiseAuth.renderAccessDenied();
     else if (route === 'compliance') await renderCompliance(force);
     else if (resources[route]) await renderResource(route, force);
     else location.hash = '#/dashboard';
@@ -171,7 +176,9 @@ async function renderDashboard(force = false) {
   const aum = folios.reduce((sum, f) => sum + Number(f.currentValue || 0), 0);
   const invested = transactions.filter(t => /purchase|sip/i.test(t.transactionType)).reduce((sum, t) => sum + Number(t.amount || 0), 0);
   const recent = [...transactions].sort((a,b) => String(b.transactionDate).localeCompare(String(a.transactionDate))).slice(0,5);
-  app.innerHTML = `${pageHead('Portfolio command centre', 'Good day, Administrator', 'Here is the latest view of your fund operations.', '<a class="button" href="#/statements">View statements</a><button class="button primary" data-create="transactions">+ New transaction</button>')}
+  const userName = window.FundWiseAuth?.currentUser()?.fullName?.split(' ')[0] || 'there';
+  const transactionAction = canWrite('transactions') ? '<button class="button primary" data-create="transactions">+ New transaction</button>' : '';
+  app.innerHTML = `${pageHead('Portfolio command centre', `Good day, ${escapeHtml(userName)}`, 'Here is the latest view of your fund operations.', `<a class="button" href="#/statements">View statements</a>${transactionAction}`)}
     <div class="metric-grid">
       ${metric('₹', money(aum), 'Assets under management', 'Live holdings value')}
       ${metric('◎', number(investors.length), 'Registered investors', `${investors.filter(x => /active/i.test(x.status)).length} active accounts`)}
@@ -181,7 +188,7 @@ async function renderDashboard(force = false) {
     <div class="dashboard-grid">
       <div class="card"><div class="section-head"><div><h2>Transaction activity</h2><p>Monthly purchases and redemptions</p></div><a href="#/transactions" class="button small">View all</a></div>${renderChart(transactions)}</div>
       <div class="card"><div class="section-head"><div><h2>Quick actions</h2><p>Common operational tasks</p></div></div><div class="quick-grid">
-        ${quick('◎','Add investor','investors')}${quick('◇','Create scheme','schemes')}${quick('▤','Open folio','folios')}${quick('⇄','Record transaction','transactions')}
+        ${canWrite('investors')?quick('◎','Add investor','investors'):''}${canWrite('schemes')?quick('◇','Create scheme','schemes'):''}${canWrite('folios')?quick('▤','Open folio','folios'):''}${canWrite('transactions')?quick('⇄','Record transaction','transactions'):''}
       </div></div>
       <div class="card"><div class="section-head"><div><h2>Recent transactions</h2><p>Latest activity across all folios</p></div></div><div class="activity-list">${recent.length ? recent.map(activity).join('') : emptyInline('No transactions recorded yet.')}</div></div>
       <div class="card"><div class="section-head"><div><h2>Operations snapshot</h2><p>Items needing attention</p></div></div><div class="activity-list">
@@ -209,12 +216,48 @@ function renderChart(items) {
 
 async function renderCompliance(force = false) {
   await preload(['investors','kyc-documents','bank-mandates','nominees'], force);
-  const tabs = [['kyc-documents','KYC documents'],['bank-mandates','Bank mandates'],['nominees','Nominees']];
+  const tabs = [['onboarding','Onboarding approvals'],['kyc-documents','KYC documents'],['bank-mandates','Bank mandates'],['nominees','Nominees']];
   app.innerHTML = `${pageHead('Client management', 'KYC & banking', 'Maintain compliance documents, bank mandates and nominees.')}
     <div class="tabs">${tabs.map(([id,label]) => `<button class="tab ${state.complianceTab===id?'active':''}" data-compliance-tab="${id}">${label}</button>`).join('')}</div>
     <div id="resourceArea"></div>`;
-  renderResourceArea(state.complianceTab);
-  document.querySelectorAll('[data-compliance-tab]').forEach(btn => btn.addEventListener('click', () => { state.complianceTab = btn.dataset.complianceTab; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active',x===btn)); renderResourceArea(state.complianceTab); }));
+  if (state.complianceTab === 'onboarding') renderOnboardingApprovals(); else renderResourceArea(state.complianceTab);
+  document.querySelectorAll('[data-compliance-tab]').forEach(btn => btn.addEventListener('click', () => { state.complianceTab = btn.dataset.complianceTab; renderCompliance(); }));
+}
+
+function renderOnboardingApprovals() {
+  const area = document.querySelector('#resourceArea');
+  const investors = state.cache.investors || [], documents = state.cache['kyc-documents'] || [], mandates = state.cache['bank-mandates'] || [], nominees = state.cache.nominees || [];
+  const admin = window.FundWiseAuth?.isAdmin?.() === true;
+  area.innerHTML = `<div class="card"><div class="section-head"><div><h2>Investor onboarding approvals</h2><p>Verify each submitted document and mandate, then activate the investor profile.</p></div></div><div class="portal-list">${investors.map(investor => {
+    const investorDocuments = documents.filter(document => String(document.investorId) === String(investor.id));
+    const investorMandates = mandates.filter(mandate => String(mandate.investorId) === String(investor.id));
+    const hasNominee = nominees.some(nominee => String(nominee.investorId) === String(investor.id));
+    const documentsVerified = investorDocuments.length >= 2 && investorDocuments.every(document => String(document.status).toUpperCase() === 'VERIFIED');
+    const mandateVerified = investorMandates.some(mandate => String(mandate.status).toUpperCase() === 'VERIFIED');
+    const ready = documentsVerified && mandateVerified && hasNominee;
+    const documentItems = investorDocuments.map(document => `<span class="review-item">${escapeHtml(document.documentType)} ${badge(document.status)}${admin && String(document.status).toUpperCase() !== 'VERIFIED' ? `<button class="button small" data-verify-kyc="${document.id}">Verify</button>` : ''}</span>`).join('') || '<span class="review-item">No KYC documents</span>';
+    const mandateItems = investorMandates.map(mandate => `<span class="review-item">${escapeHtml(mandate.bankName)} ${badge(mandate.status)}${admin && String(mandate.status).toUpperCase() !== 'VERIFIED' ? `<button class="button small" data-verify-mandate="${mandate.id}">Verify</button>` : ''}</span>`).join('') || '<span class="review-item">No bank mandate</span>';
+    const checklist = `${documentsVerified ? 'KYC verified' : 'KYC needs review'} · ${mandateVerified ? 'Bank verified' : 'Bank needs review'} · ${hasNominee ? 'Nominee added' : 'Nominee missing'}`;
+    return `<div class="onboarding-review"><div><strong>${escapeHtml(investor.fullName)}</strong><small>${escapeHtml(investor.email)} · ${escapeHtml(investor.status || 'PENDING')}</small><div class="review-items">${documentItems}${mandateItems}<span class="review-item">${hasNominee ? 'Nominee added' : 'No nominee'}</span></div><small>${checklist}</small></div><div class="review-actions"><span>${badge(investor.status)}</span>${admin ? `<button class="button primary small" data-approve-onboarding="${investor.id}" ${ready ? '' : 'disabled'} title="${ready ? 'Activate this investor' : 'Verify two KYC documents, a bank mandate, and add a nominee first'}">Approve & activate</button>` : ''}</div></div>`;
+  }).join('') || '<div class="empty"><h2>No investor profiles yet</h2><p>Create an investor profile, then add KYC, bank and nominee records.</p></div>'}</div></div>`;
+  document.querySelectorAll('[data-verify-kyc]').forEach(button => button.addEventListener('click', () => verifyComplianceRecord('kyc-documents', button.dataset.verifyKyc)));
+  document.querySelectorAll('[data-verify-mandate]').forEach(button => button.addEventListener('click', () => verifyComplianceRecord('bank-mandates', button.dataset.verifyMandate)));
+  document.querySelectorAll('[data-approve-onboarding]').forEach(button => button.addEventListener('click', () => approveOnboarding(button.dataset.approveOnboarding)));
+}
+
+async function verifyComplianceRecord(resource, id) {
+  const record = (state.cache[resource] || []).find(item => String(item.id) === String(id));
+  if (!record) return;
+  const payload = {};
+  resources[resource].fields.forEach(field => { payload[field.name] = record[field.name]; });
+  payload.status = 'VERIFIED';
+  try { await api(`/${resource}/${id}`, { method:'PUT', body:JSON.stringify(payload) }); await load(resource, true); await load('investors', true); renderCompliance(); toast(`${resources[resource].singular} verified`); }
+  catch (error) { toast(error.message, true); }
+}
+
+async function approveOnboarding(id) {
+  try { await api(`/investors/${id}/approve-onboarding`, { method:'POST', body:'{}' }); await load('investors', true); renderCompliance(); toast('Investor onboarding approved and profile activated'); }
+  catch (error) { toast(error.message, true); }
 }
 
 async function renderResource(resource, force = false) {
@@ -222,7 +265,7 @@ async function renderResource(resource, force = false) {
   await preload([...new Set([resource,...refs])], force);
   state.currentResource = resource;
   const c = resources[resource];
-  app.innerHTML = `${pageHead('FundWise operations', plural(c.singular), c.description, `<button class="button primary" data-create="${resource}">+ Add ${c.singular.toLowerCase()}</button>`)}<div id="resourceArea"></div>`;
+  app.innerHTML = `${pageHead('FundWise operations', plural(c.singular), c.description, canWrite(resource) ? `<button class="button primary" data-create="${resource}">+ Add ${c.singular.toLowerCase()}</button>` : '<span class="role-chip">VIEW ONLY</span>')}<div id="resourceArea"></div>`;
   renderResourceArea(resource);
 }
 
@@ -230,19 +273,23 @@ function renderResourceArea(resource) {
   state.currentResource = resource;
   const c = resources[resource], allRows = state.cache[resource] || [];
   const q = state.search.toLowerCase();
-  const rows = q ? allRows.filter(row => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) : allRows;
+  const searchedRows = q ? allRows.filter(row => Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) : allRows;
+  const statusFilterActive = resource === 'schemes' && state.schemeStatus !== 'ALL';
+  const rows = statusFilterActive ? searchedRows.filter(row => String(row.status || '').toUpperCase() === state.schemeStatus) : searchedRows;
+  const schemeStatusFilter = resource === 'schemes' ? `<select class="scheme-status-filter" data-scheme-status aria-label="Filter schemes by status"><option value="ALL" ${state.schemeStatus==='ALL'?'selected':''}>All schemes</option><option value="ACTIVE" ${state.schemeStatus==='ACTIVE'?'selected':''}>Active</option><option value="INACTIVE" ${state.schemeStatus==='INACTIVE'?'selected':''}>Inactive</option><option value="CLOSED" ${state.schemeStatus==='CLOSED'?'selected':''}>Closed</option></select>` : '';
   const area = document.querySelector('#resourceArea');
   area.innerHTML = `<div class="card">
-    <div class="toolbar"><div class="toolbar-search"><span>⌕</span><input data-table-search placeholder="Search ${plural(c.singular).toLowerCase()}…" value="${escapeHtml(state.search)}"></div><button class="button small" data-refresh-resource="${resource}">↻ Refresh</button><button class="button small primary" data-create="${resource}">+ Add new</button></div>
-    ${rows.length ? table(c, rows, resource) : emptyState(c, resource, q)}
+    <div class="toolbar"><div class="toolbar-search"><span>⌕</span><input data-table-search placeholder="Search ${plural(c.singular).toLowerCase()}…" value="${escapeHtml(state.search)}"></div>${schemeStatusFilter}<button class="button small" data-refresh-resource="${resource}">↻ Refresh</button>${canWrite(resource)?`<button class="button small primary" data-create="${resource}">+ Add new</button>`:''}</div>
+    ${rows.length ? table(c, rows, resource) : emptyState(c, resource, q || statusFilterActive)}
     ${rows.length ? `<div class="table-footer"><span>Showing ${rows.length} of ${allRows.length}</span><span>Live data from /${resource}</span></div>` : ''}
   </div>`;
   bindPageActions();
   area.querySelector('[data-table-search]')?.addEventListener('input', e => { state.search = e.target.value; renderResourceArea(resource); });
+  area.querySelector('[data-scheme-status]')?.addEventListener('change', e => { state.schemeStatus = e.target.value; renderResourceArea(resource); });
 }
 
-function table(c, rows, resource) { return `<div class="table-wrap"><table><thead><tr>${c.columns.map(x => `<th>${x.label}</th>`).join('')}<th></th></tr></thead><tbody>${rows.map(row => `<tr>${c.columns.map(x => `<td>${x.render(row)}</td>`).join('')}<td><div class="row-actions">${c.special === 'nav' ? `<button title="NAV history" data-nav="${row.id}">↗</button>` : ''}${c.special === 'statement' ? `<button title="View statement" data-statement="${row.folioId}">▤</button>` : `<button title="View" data-view="${resource}:${row.id}">○</button>`}${!c.noEdit ? `<button title="Edit" data-edit="${resource}:${row.id}">✎</button>` : ''}<button title="Delete" data-delete="${resource}:${row.id}">×</button></div></td></tr>`).join('')}</tbody></table></div>`; }
-function emptyState(c, resource, searching) { return `<div class="empty"><div class="empty-icon">${searching ? '⌕' : c.icon}</div><h2>${searching ? 'No matching records' : `No ${plural(c.singular).toLowerCase()} yet`}</h2><p>${searching ? 'Try a different search term.' : `Add your first ${c.singular.toLowerCase()} to get started.`}</p>${searching ? '' : `<button class="button primary" data-create="${resource}">+ Add ${c.singular.toLowerCase()}</button>`}</div>`; }
+function table(c, rows, resource) { const writable=canWrite(resource); return `<div class="table-wrap"><table><thead><tr>${c.columns.map(x => `<th>${x.label}</th>`).join('')}<th></th></tr></thead><tbody>${rows.map(row => `<tr>${c.columns.map(x => `<td>${x.render(row)}</td>`).join('')}<td><div class="row-actions">${c.special === 'nav' ? `<button title="NAV history" data-nav="${row.id}">↗</button>` : ''}${c.special === 'statement' ? `<button title="View statement" data-statement="${row.folioId}">▤</button>` : `<button title="View" data-view="${resource}:${row.id}">○</button>`}${writable&&!c.noEdit ? `<button title="Edit" data-edit="${resource}:${row.id}">✎</button>` : ''}${writable?`<button title="Delete" data-delete="${resource}:${row.id}">×</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`; }
+function emptyState(c, resource, searching) { return `<div class="empty"><div class="empty-icon">${searching ? '⌕' : c.icon}</div><h2>${searching ? 'No matching records' : `No ${plural(c.singular).toLowerCase()} yet`}</h2><p>${searching ? 'Try a different search term.' : canWrite(resource)?`Add your first ${c.singular.toLowerCase()} to get started.`:'No records are available to view yet.'}</p>${searching||!canWrite(resource) ? '' : `<button class="button primary" data-create="${resource}">+ Add ${c.singular.toLowerCase()}</button>`}</div>`; }
 function plural(value) { if (/history$/i.test(value)) return value; if (/y$/i.test(value)) return value.slice(0,-1)+'ies'; return value+'s'; }
 
 function bindPageActions() {
@@ -256,6 +303,7 @@ function bindPageActions() {
 }
 
 async function openForm(resource, id = null) {
+  if (!canWrite(resource)) return window.FundWiseAuth.renderAccessDenied();
   const c = resources[resource], record = id ? (state.cache[resource] || []).find(x => String(x.id) === String(id)) : {};
   await preload([...new Set(c.fields.filter(f => f.type === 'ref').map(f => f.resource))]);
   modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${id?'Edit':'Add'} ${c.singular.toLowerCase()}</h2><p>${id?'Update the existing record.':'Complete the details below.'}</p></div><button class="close-button" data-close>×</button></div><form id="entityForm"><div class="modal-body"><div class="form-grid">${c.fields.map(f => renderField(f, record?.[f.name])).join('')}</div></div><div class="modal-actions"><button type="button" class="button" data-close>Cancel</button><button class="button primary" type="submit">${id?'Save changes':'Create record'}</button></div></form></div></div>`;
@@ -278,7 +326,7 @@ async function openForm(resource, id = null) {
       if (data.email) data.email = data.email.toLowerCase();
       c.fields.forEach(f => { if (['number','ref'].includes(f.type)) data[f.name] = data[f.name] === '' ? null : Number(data[f.name]); });
       await api(`/${resource}${id?`/${id}`:''}`, { method:id?'PUT':'POST', body:JSON.stringify(data) });
-      await load(resource,true); closeModal(); toast(`${c.singular} ${id?'updated':'created'} successfully`); await refreshCurrent();
+      await load(resource,true); if (['kyc-documents','bank-mandates','nominees'].includes(resource)) await load('investors',true); closeModal(); toast(`${c.singular} ${id?'updated':'created'} successfully`); await refreshCurrent();
     } catch (error) { toast(error.message,true); button.disabled = false; button.textContent = id?'Save changes':'Create record'; }
   });
 }
@@ -317,13 +365,14 @@ function renderField(f, value = '') {
 function openDetails(resource, id) {
   const c = resources[resource], record = (state.cache[resource] || []).find(x => String(x.id) === String(id));
   if (!record) return;
-  modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${c.singular} details</h2><p>Record #${id}</p></div><button class="close-button" data-close>×</button></div><div class="modal-body"><div class="detail-grid">${Object.entries(record).map(([k,v]) => `<div class="detail-item"><small>${humanize(k)}</small><strong>${escapeHtml(formatDetail(k,v))}</strong></div>`).join('')}</div></div><div class="modal-actions"><button class="button" data-close>Close</button>${c.noEdit?'':`<button class="button primary" data-modal-edit>Edit record</button>`}</div></div></div>`;
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${c.singular} details</h2><p>Record #${id}</p></div><button class="close-button" data-close>×</button></div><div class="modal-body"><div class="detail-grid">${Object.entries(record).map(([k,v]) => `<div class="detail-item"><small>${humanize(k)}</small><strong>${escapeHtml(formatDetail(k,v))}</strong></div>`).join('')}</div></div><div class="modal-actions"><button class="button" data-close>Close</button>${c.noEdit||!canWrite(resource)?'':`<button class="button primary" data-modal-edit>Edit record</button>`}</div></div></div>`;
   bindModalClose(); document.querySelector('[data-modal-edit]')?.addEventListener('click', () => openForm(resource,id));
 }
 function humanize(value) { return value.replace(/([A-Z])/g,' $1').replace(/^./,x=>x.toUpperCase()); }
 function formatDetail(key,value) { if (/value|amount|nav$/i.test(key) && !/number/i.test(key)) return money(value); if (/At$/i.test(key)) return dateTime(value); if (/Id$/i.test(key)) return `#${value}`; return value ?? '—'; }
 
 function confirmDelete(resource,id) {
+  if (!canWrite(resource)) return window.FundWiseAuth.renderAccessDenied();
   const c = resources[resource];
   modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal"><div class="modal-head"><div><h2>Delete ${c.singular.toLowerCase()}?</h2><p>This permanently removes record #${id}.</p></div><button class="close-button" data-close>×</button></div><div class="modal-body"><p>This action cannot be undone. Related records may need to be removed first.</p></div><div class="modal-actions"><button class="button" data-close>Cancel</button><button class="button danger" data-confirm-delete>Delete record</button></div></div></div>`;
   bindModalClose(); document.querySelector('[data-confirm-delete]').addEventListener('click', async e => { e.target.disabled=true; try { await api(`/${resource}/${id}`,{method:'DELETE'}); await load(resource,true); closeModal(); toast(`${c.singular} deleted`); await refreshCurrent(); } catch(error) { toast(error.message,true); e.target.disabled=false; } });
@@ -332,8 +381,9 @@ function confirmDelete(resource,id) {
 async function openNavHistory(schemeId) {
   const scheme = (state.cache.schemes || []).find(x => String(x.id) === String(schemeId));
   let history = []; try { history = await api(`/schemes/${schemeId}/nav-history`); } catch(error) { toast(error.message,true); return; }
-  modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal wide"><div class="modal-head"><div><h2>NAV history</h2><p>${escapeHtml(scheme?.name || `Scheme #${schemeId}`)}</p></div><button class="close-button" data-close>×</button></div><div class="modal-body"><form id="navForm"><div class="form-grid"><div class="field"><label>NAV date *</label><input type="date" name="navDate" required value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>NAV value *</label><input type="number" name="nav" min="0" step="0.0001" required></div></div><div style="margin-top:12px"><button class="button primary">+ Add NAV</button></div></form><div class="table-wrap" style="margin-top:20px"><table><thead><tr><th>Date</th><th>NAV</th></tr></thead><tbody>${history.sort((a,b)=>String(b.navDate).localeCompare(String(a.navDate))).map(x=>`<tr><td>${escapeHtml(x.navDate)}</td><td>${money(x.nav)}</td></tr>`).join('') || '<tr><td colspan="2">No NAV history yet.</td></tr>'}</tbody></table></div></div></div></div>`;
-  bindModalClose(); document.querySelector('#navForm').addEventListener('submit', async e => { e.preventDefault(); const data=Object.fromEntries(new FormData(e.target).entries()); data.nav=Number(data.nav); try { await api(`/schemes/${schemeId}/nav-history`,{method:'POST',body:JSON.stringify(data)}); toast('NAV history added'); openNavHistory(schemeId); } catch(error){ toast(error.message,true); } });
+  const navForm = canWrite('schemes') ? `<form id="navForm"><div class="form-grid"><div class="field"><label>NAV date *</label><input type="date" name="navDate" required value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>NAV value *</label><input type="number" name="nav" min="0" step="0.0001" required></div></div><div style="margin-top:12px"><button class="button primary">+ Add NAV</button></div></form>` : '';
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-close-modal><div class="modal wide"><div class="modal-head"><div><h2>NAV history</h2><p>${escapeHtml(scheme?.name || `Scheme #${schemeId}`)}</p></div><button class="close-button" data-close>×</button></div><div class="modal-body">${navForm}<div class="table-wrap" style="margin-top:${navForm?'20':'0'}px"><table><thead><tr><th>Date</th><th>NAV</th></tr></thead><tbody>${history.sort((a,b)=>String(b.navDate).localeCompare(String(a.navDate))).map(x=>`<tr><td>${escapeHtml(x.navDate)}</td><td>${money(x.nav)}</td></tr>`).join('') || '<tr><td colspan="2">No NAV history yet.</td></tr>'}</tbody></table></div></div></div></div>`;
+  bindModalClose(); document.querySelector('#navForm')?.addEventListener('submit', async e => { e.preventDefault(); const data=Object.fromEntries(new FormData(e.target).entries()); data.nav=Number(data.nav); try { await api(`/schemes/${schemeId}/nav-history`,{method:'POST',body:JSON.stringify(data)}); toast('NAV history added'); openNavHistory(schemeId); } catch(error){ toast(error.message,true); } });
 }
 
 async function openStatement(folioId) {
@@ -353,8 +403,9 @@ async function openStatement(folioId) {
       </div>
       <h3 class="statement-section-title">Transaction history</h3>
       <div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>NAV</th><th>Units</th><th>Status</th></tr></thead><tbody>${transactions.length ? transactions.map(t => `<tr><td>${escapeHtml(t.transactionDate || '—')}</td><td>${escapeHtml(t.transactionType || '—')}</td><td>${money(t.amount)}</td><td>${money(t.nav)}</td><td>${number(t.units)}</td><td>${badge(t.status)}</td></tr>`).join('') : '<tr><td colspan="6">No transactions are available for this folio.</td></tr>'}</tbody></table></div>
-    </div></div><div class="modal-actions"><button class="button" data-close>Close</button><button class="button primary" onclick="window.print()">Print statement</button></div></div></div>`;
+    </div></div><div class="modal-actions"><button class="button" data-close>Close</button><button class="button primary" data-print-statement>Print statement</button></div></div></div>`;
     bindModalClose();
+    document.querySelector('[data-print-statement]').addEventListener('click', () => window.print());
   } catch(error) { toast(error.message,true); }
 }
 
@@ -370,4 +421,5 @@ document.querySelector('#refreshButton').addEventListener('click',()=>router(tru
 document.querySelector('#menuButton').addEventListener('click',()=>document.querySelector('#sidebar').classList.toggle('open'));
 document.querySelector('#globalSearch').addEventListener('input',e=>{ state.search=e.target.value; if(state.currentResource && document.querySelector('#resourceArea')) renderResourceArea(state.currentResource); });
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();document.querySelector('#globalSearch').focus();} if(e.key==='Escape')closeModal(); });
-if(!location.hash) location.hash='#/dashboard'; else router();
+window.fundWiseRouter = router;
+if(!location.hash || ['#/login','#/register'].includes(location.hash)) location.hash='#/dashboard'; else router();

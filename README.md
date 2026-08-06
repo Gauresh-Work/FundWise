@@ -11,6 +11,7 @@ Simple Java 21 / Spring Boot Maven microservices for the FundWise mutual-fund ca
 | Folio service | 8083 | Folios, storing only investor and scheme IDs |
 | Transaction service | 8084 | Purchase, redemption, SIP and switch records |
 | Statement service | 8085 | Statement-generation records and simple JSON statements |
+| Auth service | 8086 | Accounts, password hashing, rotating refresh tokens and roles |
 
 ## FundWise web application
 
@@ -30,7 +31,33 @@ The web application includes:
 - Purchase, redemption, SIP, and switch transaction management
 - Statement generation, viewing, and printing
 
-The frontend is packaged inside the API gateway, so no separate Node.js server or dependency installation is required.
+The frontend is packaged inside the API gateway and uses Oracle JET with the Redwood theme, so no separate Node.js server is required.
+
+### Authentication and authorization
+
+Public registration is exclusively for investors. It creates a linked investor profile with pending KYC documents, a bank mandate, and a nominee. Investor accounts can access only their own onboarding portal.
+
+Administrator accounts are never created through the public signup form. Provision the initial administrator once, before starting the auth service, by setting these environment variables:
+
+```powershell
+$env:FUNDWISE_BOOTSTRAP_ADMIN_NAME = "FundWise Administrator"
+$env:FUNDWISE_BOOTSTRAP_ADMIN_EMAIL = "admin@example.com"
+$env:FUNDWISE_BOOTSTRAP_ADMIN_PASSWORD = "UseAUniquePassword123"
+.\run-all.ps1
+```
+
+The bootstrap is ignored after an `ADMIN` account already exists. An administrator can then assign approved staff roles from **Team access**:
+
+- `ADMIN`: all operations, scheme management, API documentation, and user administration
+- `ADVISOR`: read access plus investor, compliance, folio, transaction, and statement changes
+- `VIEWER`: read-only access to operational data
+- `INVESTOR`: access only to the investor's own onboarding status
+
+Access tokens expire after 15 minutes. Refresh tokens are rotated, stored as SHA-256 hashes in MySQL, and revoked on logout. For non-local use, set the same strong secret for the gateway and auth service:
+
+```powershell
+$env:AUTH_JWT_SECRET = "replace-with-at-least-32-random-characters"
+```
 
 ## Prerequisites
 
@@ -53,6 +80,7 @@ CREATE DATABASE fundwise_scheme;
 CREATE DATABASE fundwise_folio;
 CREATE DATABASE fundwise_transaction;
 CREATE DATABASE fundwise_statement;
+CREATE DATABASE fundwise_auth;
 ```
 
 ## Run from IntelliJ IDEA

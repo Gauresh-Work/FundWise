@@ -14,7 +14,7 @@ public final class InvestorRequests {
     public record BankMandateRequest(@NotNull Long investorId, @NotBlank String bankName,
                                      @NotBlank @Pattern(regexp = "^[0-9]{9,18}$", message = "Account number must contain 9 to 18 digits") String accountNumber,
                                      @NotBlank @Pattern(regexp = "^[A-Za-z]{4}0[A-Za-z0-9]{6}$", message = "Enter a valid 11-character IFSC code") String ifscCode,
-                                     String accountType) { }
+                                     String accountType, @NotBlank String status) { }
     public record NomineeRequest(@NotNull Long investorId, @NotBlank String fullName,
                                  String relationship, @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal allocationPercentage) { }
     public record KycDocumentRequest(@NotNull Long investorId, @NotBlank String documentType,

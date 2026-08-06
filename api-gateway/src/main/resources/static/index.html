@@ -1,17 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="oj-web-applayout-html">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="FundWise mutual fund operations dashboard" />
-  <title>FundWise — Wealth operations</title>
+  <meta name="description" content="FundWise secure mutual fund operations workspace" />
+  <title>FundWise — Secure wealth operations</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260805-3" />
+  <link rel="stylesheet" href="./vendor/oraclejet/css/oj-redwood-min.css" />
+  <link rel="stylesheet" href="./styles.css?v=20260806-investor-compliance" />
 </head>
-<body>
-  <div class="app-shell">
+<body class="oj-web-applayout-body">
+  <div id="authRoot" class="auth-root">
+    <div class="auth-loading"><span class="brand-mark">F</span><p>Preparing your secure workspace…</p></div>
+  </div>
+
+  <div class="app-shell hidden" id="appShell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#/dashboard" aria-label="FundWise home">
         <span class="brand-mark">F</span>
@@ -27,26 +32,32 @@
         <a href="#/folios" data-route="folios"><span class="nav-icon">▤</span> Folios</a>
         <a href="#/transactions" data-route="transactions"><span class="nav-icon">⇄</span> Transactions</a>
         <a href="#/statements" data-route="statements"><span class="nav-icon">≡</span> Statements</a>
+        <span class="nav-label">Workspace</span>
+        <a href="#/users" data-route="users" data-admin-only><span class="nav-icon">♙</span> Team access</a>
+        <a href="#/profile" data-route="profile"><span class="nav-icon">◉</span> My profile</a>
+        <span class="nav-label investor-nav-item">My investments</span>
+        <a class="investor-nav-item" href="#portfolio"><span class="nav-icon">▤</span> Portfolio</a>
+        <a class="investor-nav-item" href="#invest"><span class="nav-icon">⇄</span> Invest</a>
+        <a class="investor-nav-item" href="#encashment"><span class="nav-icon">₹</span> Encash</a>
+        <a class="investor-nav-item" href="#transactions"><span class="nav-icon">≡</span> Transactions</a>
+        <a class="investor-nav-item" href="#statements"><span class="nav-icon">▧</span> Statements</a>
+        <a class="investor-nav-item" href="#kyc-banking"><span class="nav-icon">✓</span> KYC &amp; banking</a>
       </nav>
       <div class="sidebar-card">
         <span class="status-dot"></span>
-        <div><strong>API Gateway</strong><small id="gatewayStatus">Checking connection…</small></div>
+        <div><strong>API Gateway</strong><small id="gatewayStatus">Secure connection</small></div>
       </div>
-      <div class="sidebar-footer"><div class="avatar">VK</div><div><strong>Fund administrator</strong><small>Operations workspace</small></div></div>
+      <div class="sidebar-footer"><div class="avatar" data-user-initials>FW</div><div><strong data-user-name>FundWise user</strong><small data-user-role>Secure workspace</small></div></div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <button class="icon-button menu-button" id="menuButton" aria-label="Open navigation">☰</button>
-        <div class="search-wrap">
-          <span>⌕</span>
-          <input id="globalSearch" type="search" placeholder="Search this page…" aria-label="Search current page" />
-          <kbd>⌘ K</kbd>
-        </div>
+        <div class="search-wrap"><span>⌕</span><input id="globalSearch" type="search" placeholder="Search this page…" aria-label="Search current page" /><kbd>⌘ K</kbd></div>
         <div class="top-actions">
           <button class="icon-button" id="refreshButton" aria-label="Refresh page" title="Refresh">↻</button>
-          <button class="icon-button notification" aria-label="Notifications">○<i></i></button>
-          <div class="top-profile"><span class="avatar small">VK</span><span><strong>Administrator</strong><small>FundWise Ops</small></span></div>
+          <div class="top-profile"><span class="avatar small" data-user-initials>FW</span><span><strong data-user-name>User</strong><small data-user-role>VIEWER</small></span></div>
+          <oj-button id="logoutButton" chroming="borderless" title="Sign out"><span slot="startIcon" class="oj-ux-ico-log-out"></span>Sign out</oj-button>
         </div>
       </header>
       <div id="connectionBanner" class="connection-banner hidden"></div>
@@ -56,6 +67,9 @@
 
   <div id="modalRoot"></div>
   <div id="toastRoot" class="toast-root" aria-live="assertive"></div>
-  <script src="./app.js?v=20260805-3" defer></script>
+  <script src="./vendor/custom-elements.min.js"></script>
+  <script src="./auth-ui.js?v=20260806-login-reliability"></script>
+  <script src="./vendor/require.min.js"></script>
+  <script src="./main.js?v=20260805-auth"></script>
 </body>
 </html>

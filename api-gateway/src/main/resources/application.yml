@@ -5,6 +5,10 @@ spring:
     gateway:
       discovery: { locator: { enabled: true, lower-case-service-id: true } }
       routes:
+        - id: auth
+          uri: lb://auth-service
+          predicates:
+            - "Path=/auth/**"
         - id: investor
           uri: lb://investor-service
           predicates:
@@ -29,6 +33,12 @@ spring:
           uri: lb://investor-service
           predicates:
             - "Path=/openapi/investor"
+          filters:
+            - "SetPath=/v3/api-docs"
+        - id: auth-openapi
+          uri: lb://auth-service
+          predicates:
+            - "Path=/openapi/auth"
           filters:
             - "SetPath=/v3/api-docs"
         - id: scheme-openapi
@@ -61,16 +71,21 @@ spring:
             - "Path=/openapi/discovery"
           filters:
             - "SetPath=/v3/api-docs"
-eureka: { client: { service-url: { defaultZone: http://localhost:8761/eureka/ } } }
+eureka: { client: { registry-fetch-interval-seconds: 5, service-url: { defaultZone: http://localhost:8761/eureka/ } } }
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
     disable-swagger-default-url: true
     urls:
       - { name: API Gateway, url: /v3/api-docs }
+      - { name: Auth Service, url: /openapi/auth }
       - { name: Discovery Server, url: /openapi/discovery }
       - { name: Investor Service, url: /openapi/investor }
       - { name: Scheme Service, url: /openapi/scheme }
       - { name: Folio Service, url: /openapi/folio }
       - { name: Transaction Service, url: /openapi/transaction }
       - { name: Statement Service, url: /openapi/statement }
+fundwise:
+  jwt:
+    issuer: fundwise
+    secret: ${AUTH_JWT_SECRET:fundwise-local-development-secret-change-me-2026}

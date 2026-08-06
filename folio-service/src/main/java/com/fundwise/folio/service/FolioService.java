@@ -10,6 +10,7 @@ import java.util.List;
  private final FolioRepository repository;
  public Folio create(FolioRequest r){ return repository.save(copy(r,new Folio())); }
  public List<Folio> all(){ return repository.findAll(); }
+ public List<Folio> byInvestor(Long investorId){ return repository.findByInvestorId(investorId); }
  public Folio one(Long id){ return repository.findById(id).orElseThrow(()->new NotFoundException(id)); }
  public Folio update(Long id,FolioRequest r){ return repository.save(copy(r,one(id))); }
  public void delete(Long id){ repository.delete(one(id)); }

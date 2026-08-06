@@ -5,6 +5,7 @@ import jakarta.validation.Valid; import lombok.RequiredArgsConstructor; import o
  private final FolioService service;
  @PostMapping @ResponseStatus(HttpStatus.CREATED) public Folio create(@Valid @RequestBody FolioRequest r){return service.create(r);}
  @GetMapping public List<Folio> all(){return service.all();}
+ @GetMapping("/investor/{investorId}") public List<Folio> byInvestor(@PathVariable Long investorId){return service.byInvestor(investorId);}
  @GetMapping("/{id}") public Folio one(@PathVariable Long id){return service.one(id);}
  @PutMapping("/{id}") public Folio update(@PathVariable Long id,@Valid @RequestBody FolioRequest r){return service.update(id,r);}
  @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void delete(@PathVariable Long id){service.delete(id);}

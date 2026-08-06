@@ -18,4 +18,5 @@ public class BankMandate {
     @Column(nullable = false)
     private String ifscCode;
     private String accountType;
+    private String status = "PENDING";
 }

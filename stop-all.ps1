@@ -1,7 +1,7 @@
 # Stops only the processes listening on the FundWise ports.
 # Run from this folder: .\stop-all.ps1
 
-$ports = @("8761", "8080", "8081", "8082", "8083", "8084", "8085")
+$ports = @("8761", "8080", "8081", "8082", "8083", "8084", "8085", "8086")
 $processIds = @()
 
 # netstat works consistently even when Get-NetTCPConnection is restricted.

@@ -18,22 +18,26 @@ public class InvestorController {
     @GetMapping("/investors") public List<Investor> getInvestors() { return service.getInvestors(); }
     @GetMapping("/investors/{id}") public Investor getInvestor(@PathVariable Long id) { return service.getInvestor(id); }
     @PutMapping("/investors/{id}") public Investor updateInvestor(@PathVariable Long id, @Valid @RequestBody InvestorRequest r) { return service.updateInvestor(id, r); }
+    @PostMapping("/investors/{id}/approve-onboarding") public Investor approveOnboarding(@PathVariable Long id) { return service.approveOnboarding(id); }
     @DeleteMapping("/investors/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void deleteInvestor(@PathVariable Long id) { service.deleteInvestor(id); }
 
     @PostMapping("/bank-mandates") @ResponseStatus(HttpStatus.CREATED) public BankMandate createBankMandate(@Valid @RequestBody BankMandateRequest r) { return service.createBankMandate(r); }
     @GetMapping("/bank-mandates") public List<BankMandate> getBankMandates() { return service.getBankMandates(); }
+    @GetMapping("/bank-mandates/investor/{investorId}") public List<BankMandate> getBankMandatesByInvestor(@PathVariable Long investorId) { return service.getBankMandatesByInvestor(investorId); }
     @GetMapping("/bank-mandates/{id}") public BankMandate getBankMandate(@PathVariable Long id) { return service.getBankMandate(id); }
     @PutMapping("/bank-mandates/{id}") public BankMandate updateBankMandate(@PathVariable Long id, @Valid @RequestBody BankMandateRequest r) { return service.updateBankMandate(id, r); }
     @DeleteMapping("/bank-mandates/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void deleteBankMandate(@PathVariable Long id) { service.deleteBankMandate(id); }
 
     @PostMapping("/nominees") @ResponseStatus(HttpStatus.CREATED) public Nominee createNominee(@Valid @RequestBody NomineeRequest r) { return service.createNominee(r); }
     @GetMapping("/nominees") public List<Nominee> getNominees() { return service.getNominees(); }
+    @GetMapping("/nominees/investor/{investorId}") public List<Nominee> getNomineesByInvestor(@PathVariable Long investorId) { return service.getNomineesByInvestor(investorId); }
     @GetMapping("/nominees/{id}") public Nominee getNominee(@PathVariable Long id) { return service.getNominee(id); }
     @PutMapping("/nominees/{id}") public Nominee updateNominee(@PathVariable Long id, @Valid @RequestBody NomineeRequest r) { return service.updateNominee(id, r); }
     @DeleteMapping("/nominees/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void deleteNominee(@PathVariable Long id) { service.deleteNominee(id); }
 
     @PostMapping("/kyc-documents") @ResponseStatus(HttpStatus.CREATED) public KycDocument createKycDocument(@Valid @RequestBody KycDocumentRequest r) { return service.createKycDocument(r); }
     @GetMapping("/kyc-documents") public List<KycDocument> getKycDocuments() { return service.getKycDocuments(); }
+    @GetMapping("/kyc-documents/investor/{investorId}") public List<KycDocument> getKycDocumentsByInvestor(@PathVariable Long investorId) { return service.getKycDocumentsByInvestor(investorId); }
     @GetMapping("/kyc-documents/{id}") public KycDocument getKycDocument(@PathVariable Long id) { return service.getKycDocument(id); }
     @PutMapping("/kyc-documents/{id}") public KycDocument updateKycDocument(@PathVariable Long id, @Valid @RequestBody KycDocumentRequest r) { return service.updateKycDocument(id, r); }
     @DeleteMapping("/kyc-documents/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void deleteKycDocument(@PathVariable Long id) { service.deleteKycDocument(id); }
