@@ -1,51 +1,89 @@
-# FundWise Backend
+# FundWise
 
-Simple Java 17 / Spring Boot Maven microservices for the FundWise mutual-fund case study. Each business service owns its own MySQL database. There are no joins across services: IDs are passed between services.
+A mutual-fund investment platform built with Java 17, Spring Boot microservices, MySQL, and Oracle JET.
+
+FundWise includes two frontend experiences:
+
+- **FundWise Operations** — an admin dashboard served by the API Gateway.
+- **FundWise Private Investing** — an Oracle JET investor portal for registration, portfolio tracking, fund discovery, investments, redemptions, and statements.
+
+[▶ Watch the FundWise demo](assets/fundwise-demo.mp4)
+
+## Architecture
 
 | Application | Port | Responsibility |
 |---|---:|---|
-| Discovery server | 8761 | Eureka registry |
-| API gateway | 8080 | Single entry point and routing |
-| Investor service | 8081 | Investors, bank mandates, nominees and KYC documents |
-| Scheme service | 8082 | Schemes and NAV history |
-| Folio service | 8083 | Folios, storing only investor and scheme IDs |
-| Transaction service | 8084 | Purchase, redemption, SIP and switch records |
-| Statement service | 8085 | Statement-generation records and simple JSON statements |
+| Discovery Server | 8761 | Eureka service registry |
+| API Gateway | 8080 | Single API entry point, routing, admin frontend, and CORS policy |
+| Investor Service | 8081 | Investor profiles, bank mandates, nominees, and KYC documents |
+| Scheme Service | 8082 | Mutual-fund schemes and NAV history |
+| Folio Service | 8083 | Investor folios and holdings |
+| Transaction Service | 8084 | Purchases, redemptions, SIPs, and switches |
+| Statement Service | 8085 | Statement records and folio statement generation |
+| Oracle JET Investor UI | 8000 | Private investor-facing frontend during development |
 
-## FundWise web application
+## Features
 
-The API gateway now includes a responsive operations frontend. After starting all services, open:
+### Admin operations dashboard
+
+Open the gateway frontend at:
 
 ```text
 http://localhost:8080
 ```
 
-The web application includes:
+It supports:
 
-- Portfolio dashboard with live operational totals and transaction activity
 - Investor profile management
-- KYC document, bank mandate, and nominee management
-- Scheme management with NAV history
+- KYC documents, bank mandates, and nominees
+- Scheme and NAV history management
 - Folio and holdings management
 - Purchase, redemption, SIP, and switch transaction management
 - Statement generation, viewing, and printing
 
-The frontend is packaged inside the API gateway, so no separate Node.js server or dependency installation is required.
+### Investor portal
+
+Run the Oracle JET application and open:
+
+```text
+http://localhost:8000
+```
+
+It supports:
+
+- Premium landing page
+- Investor registration and sign-in
+- Private portfolio dashboard
+- Investor-owned folio and transaction views
+- Fund discovery and investments
+- Partial or full folio encashment
+- Profile, bank mandate, and nominee details
+- Folio statement viewing and printing
+
+The investor UI calls the API Gateway at `http://localhost:8080`, which routes each request to the correct microservice.
 
 ## Prerequisites
 
-- JDK 17
+- Java 17
 - Maven 3.9+
 - MySQL 8+
+- Node.js 16+ and npm for the Oracle JET frontend
 
-The default local credentials are `root` / `root`. Change them without editing YAML:
+Default local database credentials:
+
+```text
+Username: root
+Password: root
+```
+
+Override them without editing YAML:
 
 ```powershell
 $env:DB_USERNAME = "your-user"
 $env:DB_PASSWORD = "your-password"
 ```
 
-Each service creates its own `fundwise_*` database on startup when the MySQL user has permission. Alternatively, create them yourself:
+Each service creates its own database on startup when the MySQL user has permission:
 
 ```sql
 CREATE DATABASE fundwise_investor;
@@ -55,52 +93,96 @@ CREATE DATABASE fundwise_transaction;
 CREATE DATABASE fundwise_statement;
 ```
 
-## Run from IntelliJ IDEA
+## Run the backend
 
-Open the root `pom.xml` as a Maven project and configure the project SDK as Java 17. Start applications in this order:
-
-1. `DiscoveryServerApplication`
-2. `InvestorServiceApplication`, `SchemeServiceApplication`, `FolioServiceApplication`, `TransactionServiceApplication`, and `StatementServiceApplication`
-3. `ApiGatewayApplication`
-
-The services register at [Eureka](http://localhost:8761). Swagger is available at `http://localhost:<service-port>/swagger-ui.html` for every business service.
-
-## Gateway routes
-
-Use the gateway at port 8080 once all services are registered:
-
-- `/investors/**`, `/bank-mandates/**`, `/nominees/**`, `/kyc-documents/**`
-- `/schemes/**`
-- `/folios/**`
-- `/transactions/**`
-- `/statements/**`
-
-For example, `GET http://localhost:8080/investors` is forwarded to Investor Service.
-
-## Build
-
-```powershell
-mvn clean verify
-```
-
-## Start everything with one command
-
-With MySQL running, open PowerShell in this folder and run:
+With MySQL running, open PowerShell in the project root:
 
 ```powershell
 .\run-all.ps1
 ```
 
-The launcher uses your Java 17 installation. It starts all applications in the background and writes logs to the `logs` folder. For example, watch Investor Service live with:
+The launcher starts all Spring Boot applications in the background and writes logs to the `logs` folder.
 
-```powershell
-Get-Content .\logs\investor-service.out.log -Wait
+Open Eureka after the services have registered:
+
+```text
+http://localhost:8761
 ```
 
-Wait about a minute before opening Eureka at `http://localhost:8761`.
-
-To stop every FundWise application:
+To stop all FundWise applications:
 
 ```powershell
 .\stop-all.ps1
 ```
+
+## Run the investor frontend
+
+From the project root:
+
+```powershell
+cd .\fundwise-ui
+npm install
+npx ojet serve
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+The API Gateway allows requests from the Oracle JET development server through its CORS configuration.
+
+## Run from IntelliJ IDEA
+
+Open the root `pom.xml` as a Maven project and use Java 17.
+
+Start services in this order:
+
+1. `DiscoveryServerApplication`
+2. `InvestorServiceApplication`
+3. `SchemeServiceApplication`
+4. `FolioServiceApplication`
+5. `TransactionServiceApplication`
+6. `StatementServiceApplication`
+7. `ApiGatewayApplication`
+
+## Gateway routes
+
+Use the API Gateway at port `8080` once all services are registered:
+
+- `/investors/**`
+- `/bank-mandates/**`
+- `/nominees/**`
+- `/kyc-documents/**`
+- `/schemes/**`
+- `/folios/**`
+- `/transactions/**`
+- `/statements/**`
+
+Example:
+
+```text
+GET http://localhost:8080/investors
+```
+
+The gateway forwards this request to the Investor Service on port `8081`.
+
+## Build
+
+Build all backend services:
+
+```powershell
+mvn clean verify
+```
+
+Build the Oracle JET frontend:
+
+```powershell
+cd .\fundwise-ui
+npx ojet build --release
+```
+
+## Security note
+
+The investor UI filters portfolio, profile, folio, redemption, and statement views to the currently signed-in investor. A production deployment should additionally enforce authentication and investor ownership at the API Gateway and service layers.
